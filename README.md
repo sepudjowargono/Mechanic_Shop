@@ -137,7 +137,7 @@ The Postman collection included with this project demonstrates:
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone [https://github.com/sepudjowargono/Mechanic_Shop.git]
 ```
 
 Install dependencies:
