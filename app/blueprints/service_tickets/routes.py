@@ -49,6 +49,31 @@ def assign_mechanic(service_ticket_id, mechanic_id):
     if mechanic not in ticket.mechanics:
         ticket.mechanics.append(mechanic)
         db.session.commit()
+    else:
+        return jsonify({"error": "Mechanic is already assigned to this service ticket"}), 400
         
-    return service_ticket_schema.jsonify(ticket), 200
+    return jsonify({"message": 
+        f"Mechanic {mechanic.id} assigned to service ticket {ticket.id} successfully.",
+        "current_assigned_mechanics": [m.id for m in ticket.mechanics]}), 200
+
+# UNASSIGN MECHANICS FROM SERVICE TICKETS
+@service_tickets_bp.route("/<int:service_ticket_id>/remove-mechanic/<int:mechanic_id>", methods=["PUT"])
+def remove_mechanic(service_ticket_id, mechanic_id):
+    ticket = db.session.get(Service_Ticket, service_ticket_id)
+    mechanic = db.session.get(Mechanic, mechanic_id)
     
+    if not ticket:
+        return jsonify({"error": "Service ticket not found"}), 404
+    
+    if not mechanic:
+        return jsonify({"error": "Mechanic not found"}), 404
+    
+    if mechanic in ticket.mechanics:
+        ticket.mechanics.remove(mechanic)
+        db.session.commit()
+    else:
+        return jsonify({"error": "Mechanic is not assigned to this service ticket"}), 400
+        
+    return jsonify ({"message": 
+        f"Mechanic {mechanic.id} removed from service ticket {ticket.id} successfully.",
+        "current_assigned_mechanics": [m.id for m in ticket.mechanics]}), 200 
