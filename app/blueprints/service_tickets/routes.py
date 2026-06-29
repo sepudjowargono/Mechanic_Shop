@@ -4,9 +4,11 @@ from marshmallow import ValidationError
 from sqlalchemy import select
 from app.models import Mechanic, Customer, Service_Ticket, db
 from . import service_tickets_bp
+from app.extensions import limiter, cache
 
 # CREATE NEW SERVICE TICKET
 @service_tickets_bp.route("/", methods=['POST'])
+@limiter.limit("10 per minute") # Rate limiting is applied because creating new service ticket records is a sensitive operation. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
 def create_service_ticket():
     try:
         service_ticket_data = service_ticket_schema.load(request.json)
@@ -27,6 +29,7 @@ def create_service_ticket():
 # GET/READ ALL EXISTING SERVICE TICKETS
 
 @service_tickets_bp.route("/", methods=['GET'])
+@cache.cached(timeout=60) # Caching is applied because service tickets may be viewed multiple times within a short period. Caching helps reduce unnecessary database queries, improving response times and overall API efficiency.
 def get_service_tickets():
     query = select(Service_Ticket)
     service_tickets = db.session.execute(query).scalars().all()
@@ -36,6 +39,7 @@ def get_service_tickets():
 # ASSIGN MECHANICS TO SERVICE TICKETS
 
 @service_tickets_bp.route("/<int:service_ticket_id>/assign-mechanic/<int:mechanic_id>", methods=["PUT"])
+@limiter.limit("10 per minute") # Rate limiting is applied because this route modifies existing serice ticket records by assigning mechanics. Limiting requests helps prevent accidental duplicate tickets, spam requests and excessive database activity that could affect system performance and data integrity.
 def assign_mechanic(service_ticket_id, mechanic_id):
     ticket = db.session.get(Service_Ticket, service_ticket_id)
     mechanic = db.session.get(Mechanic, mechanic_id)
@@ -58,6 +62,7 @@ def assign_mechanic(service_ticket_id, mechanic_id):
 
 # UNASSIGN MECHANICS FROM SERVICE TICKETS
 @service_tickets_bp.route("/<int:service_ticket_id>/remove-mechanic/<int:mechanic_id>", methods=["PUT"])
+@limiter.limit("5 per minute") # Rate limiting is applied because this route modifies existing service ticket records by unassigning mechanics. Limiting requests helps prevent accidental duplicate tickets, spam requests and excessive database activity that could affect system performance and data integrity.
 def remove_mechanic(service_ticket_id, mechanic_id):
     ticket = db.session.get(Service_Ticket, service_ticket_id)
     mechanic = db.session.get(Mechanic, mechanic_id)

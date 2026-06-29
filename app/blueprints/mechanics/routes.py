@@ -4,10 +4,12 @@ from marshmallow import ValidationError
 from sqlalchemy import select
 from app.models import Mechanic, db
 from . import mechanics_bp
+from app.extensions import limiter, cache
 
 # CREATE NEW MECHANIC
 
 @mechanics_bp.route("/", methods=['POST'])
+@limiter.limit("5 per minute") # Rate limiting is applied because creating new mechanic records is a sensitive operation. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
 def create_mechanic():
     try:
         mechanic_data = mechanic_schema.load(request.json)
@@ -27,6 +29,7 @@ def create_mechanic():
 # GET/READ EXISTING MECHANIC
 
 @mechanics_bp.route("/", methods=['GET'])
+@cache.cached(timeout=60) # Caching is applied because the list of mechanics is requested frequently and changes infrequently. Caching the response reduces database load and allows the API to respond more quickly to repeated requests for the same data, improving performance and user experience.
 def get_mechanics():
     query = select(Mechanic)
     mechanics = db.session.execute(query).scalars().all()
@@ -56,6 +59,7 @@ def update_mechanic(mechanic_id):
 # DELETE EXISTING MECHANIC
 
 @mechanics_bp.route("/<int:mechanic_id>", methods=['DELETE'])
+@limiter.limit("5 per minute") # Rate limiting is applied because deleting mechanic records is a sensitive operation. Limiting delete requests helps prevent accidental mass deletions, malicious abuse, and excessive requests that could compromise data integrity.
 def delete_mechanic(mechanic_id):
     mechanic = db.session.get(Mechanic, mechanic_id)
     

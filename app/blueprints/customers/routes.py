@@ -4,10 +4,12 @@ from marshmallow import ValidationError
 from sqlalchemy import select
 from app.models import Customer, db
 from . import customers_bp
+from app.extensions import limiter, cache
 
 # CREATE NEW CUSTOMER
 
 @customers_bp.route("/", methods=['POST'])
+@limiter.limit("5 per minute") # This route is rate limited because it creates new records in the database. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
 def create_customer():
     try:
         customer_data = customer_schema.load(request.json)
@@ -27,6 +29,7 @@ def create_customer():
 # GET/READ EXISTING CUSTOMER
 
 @customers_bp.route("/", methods=['GET'])
+@cache.cached(timeout=60) # Caching is applied because customer information is read frequently but does not change with every request. Storing the response for 60 seconds reduces repeated database queries and improves API performance.
 def get_customers():
     query = select(Customer)
     customers = db.session.execute(query).scalars().all()
@@ -36,6 +39,7 @@ def get_customers():
 # GET/READ SPECIFIC CUSTOMER
 
 @customers_bp.route("/<int:customer_id>", methods=['GET'])
+@cache.cached(timeout=60) # Caching is applied because customer information is read frequently but does not change with every request. Storing the response for 60 seconds reduces repeated database queries and improves API performance.
 def get_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     
@@ -63,9 +67,10 @@ def update_customer(customer_id):
     db.session.commit()
     return customer_schema.jsonify(customer), 200
 
-# DELETE EXISITING CUSTOMER 
+# DELETE EXISTING CUSTOMER 
 
 @customers_bp.route("/<int:customer_id>", methods=['DELETE'])
+@limiter.limit("5 per minute") # Rate limiting is applied because deleting customer records is a sensitive operation. Limiting delete requests helps prevent accidental mass deletions, malicious abuse, and excessive requests that could compromise data integrity.
 def delete_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     
