@@ -39,6 +39,7 @@ def get_mechanics():
 # UPDATE SPECIFIC EXISTING MECHANIC
 
 @mechanics_bp.route("/<int:mechanic_id>", methods=['PUT'])
+@limiter.limit("5 per minute")
 def update_mechanic(mechanic_id):
     mechanic = db.session.get (Mechanic, mechanic_id)
     
@@ -69,3 +70,14 @@ def delete_mechanic(mechanic_id):
     db.session.delete(mechanic)
     db.session.commit()
     return jsonify({"message": f'Mechanic Id: {mechanic_id} has been deleted successfully'})
+
+# LIST OF MECHANICS IN ORDER OF WHO HAS WORKED ON THE MOST TICKETS
+@mechanics_bp.route("/most-tickets", methods=['GET'])
+@cache.cached(timeout=60)
+def most_tickets_worked():
+    query = select(Mechanic)
+    mechanics = db.session.execute(query).scalars().all()
+    
+    # Sort mechanics by the number of service tickets they are assigned to. "Reverse=True" ensures that the mechanic with the most tickets appears first in the list.
+    mechanics.sort(key=lambda mechanic: len(mechanic.service_tickets), reverse=True)
+    return mechanics_schema.jsonify(mechanics), 200

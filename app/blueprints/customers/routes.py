@@ -1,10 +1,37 @@
-from .schemas import customer_schema, customers_schema
+from .schemas import customer_schema, customers_schema, login_schema
+from app.blueprints.service_tickets.schemas import service_tickets_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
-from app.models import Customer, db
+from app.models import Customer, Service_Ticket, db
 from . import customers_bp
 from app.extensions import limiter, cache
+from app.utils.util import encode_token, token_required
+
+@customers_bp.route("/login", methods=['POST'])
+def login():
+    
+    try:
+        credentials = login_schema.load(request.json)
+        email = credentials['email']
+        password = credentials['password']
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    query = select(Customer).where(Customer.email == email)
+    customer = db.session.execute(query).scalars().first()
+    
+    if customer and customer.password == password:
+        token = encode_token(customer.id)
+        
+        response = {
+            "status": "success",
+            "message": "Login successful",
+            "token": token
+        }
+        return jsonify(response), 200
+    else:
+        return jsonify({"error": "Invalid email or password"}), 401
 
 # CREATE NEW CUSTOMER
 
@@ -29,12 +56,17 @@ def create_customer():
 # GET/READ EXISTING CUSTOMER
 
 @customers_bp.route("/", methods=['GET'])
-@cache.cached(timeout=60) # Caching is applied because customer information is read frequently but does not change with every request. Storing the response for 60 seconds reduces repeated database queries and improves API performance.
 def get_customers():
-    query = select(Customer)
-    customers = db.session.execute(query).scalars().all()
-    
-    return customers_schema.jsonify(customers), 200
+    try:
+        page = int(request.args.get('page'))
+        per_page = int(request.args.get('per_page'))
+        query = select(Customer)
+        customers = db.paginate(query, page=page, per_page=per_page)
+        return customers_schema.jsonify(customers), 200
+    except:
+        query = select(Customer)
+        customers = db.session.execute(query).scalars().all()
+        return customers_schema.jsonify(customers), 200
 
 # GET/READ SPECIFIC CUSTOMER
 
@@ -49,8 +81,12 @@ def get_customer(customer_id):
 
 # UPDATE SPECIFIC EXISTING CUSTOMER
 
-@customers_bp.route("/<int:customer_id>", methods=['PUT'])
-def update_customer(customer_id):
+@customers_bp.route("/<int:customer_id>/update-account", methods=['PUT'])
+@token_required
+def update_customer(token_customer_id, customer_id):
+    if token_customer_id != customer_id:
+        return jsonify({"error": "You are not authorized to update this account."}), 403
+    
     customer = db.session.get(Customer, customer_id)
     
     if not customer:
@@ -69,9 +105,12 @@ def update_customer(customer_id):
 
 # DELETE EXISTING CUSTOMER 
 
-@customers_bp.route("/<int:customer_id>", methods=['DELETE'])
-@limiter.limit("5 per minute") # Rate limiting is applied because deleting customer records is a sensitive operation. Limiting delete requests helps prevent accidental mass deletions, malicious abuse, and excessive requests that could compromise data integrity.
-def delete_customer(customer_id):
+@customers_bp.route("/delete-account", methods=['DELETE'])
+@token_required
+def delete_customer(token_customer_id, customer_id):
+    if token_customer_id != customer_id:
+        return jsonify({"error": "You are not authorized to delete this account."}), 403
+    
     customer = db.session.get(Customer, customer_id)
     
     if not customer: 
@@ -80,3 +119,15 @@ def delete_customer(customer_id):
     db.session.delete(customer)
     db.session.commit()
     return jsonify({"message": f'Customer Id: {customer_id} has been deleted successfully'})
+
+# GET SERVICE TICKETS ASSOCIATED WITH A SPECIFIC CUSTOMER
+@customers_bp.route("/<int:customer_id>/my-service-tickets", methods=['GET'])
+@token_required
+def get_service_tickets(token_customer_id, customer_id):
+    if token_customer_id != customer_id:
+        return jsonify({"error": "You are not authorized to view these service tickets."}), 403
+    
+    query = select(Service_Ticket).where(Service_Ticket.customer_id == customer_id)
+    service_tickets = db.session.execute(query).scalars().all()
+    
+    return service_tickets_schema.jsonify(service_tickets), 200

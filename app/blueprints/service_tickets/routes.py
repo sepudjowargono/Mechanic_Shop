@@ -1,4 +1,4 @@
-from .schemas import service_ticket_schema, service_tickets_schema
+from .schemas import service_ticket_schema, service_tickets_schema, edit_ticket_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
@@ -82,3 +82,38 @@ def remove_mechanic(service_ticket_id, mechanic_id):
     return jsonify ({"message": 
         f"Mechanic {mechanic.id} removed from service ticket {ticket.id} successfully.",
         "current_assigned_mechanics": [m.id for m in ticket.mechanics]}), 200 
+    
+#ADVANCED ENDPOINT THAT ALLOWS ADDING AND REMOVING MULTIPLE MECHANICS FROM A SERVICE TICKET IN ONE REQUEST
+@service_tickets_bp.route("/<int:service_ticket_id>/edit-mechanics", methods=["PUT"])
+def edit_ticket_mechanics(service_ticket_id):
+    try:
+        edit_mechanics = edit_ticket_schema.load(request.json)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+
+    ticket = db.session.get(Service_Ticket, service_ticket_id)
+
+    if not ticket:
+        return jsonify({"error": "Service ticket not found."}), 404
+
+    add_mechanic_ids = edit_mechanics.get("add_mechanic_ids", [])
+    remove_mechanic_ids = edit_mechanics.get("remove_mechanic_ids", [])
+
+    for mechanic_id in add_mechanic_ids:
+        mechanic = db.session.get(Mechanic, mechanic_id)
+
+        if mechanic and mechanic not in ticket.mechanics:
+            ticket.mechanics.append(mechanic)
+
+    for mechanic_id in remove_mechanic_ids:
+        mechanic = db.session.get(Mechanic, mechanic_id)
+
+        if mechanic and mechanic in ticket.mechanics:
+            ticket.mechanics.remove(mechanic)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Service ticket mechanics updated successfully.",
+        "current_assigned_mechanics": [m.id for m in ticket.mechanics]
+    }), 200
