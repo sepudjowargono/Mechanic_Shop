@@ -1,11 +1,39 @@
-from .schemas import mechanic_schema, mechanics_schema
+from .schemas import mechanic_schema, mechanics_schema, login_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
 from app.models import Mechanic, db
 from . import mechanics_bp
 from app.extensions import limiter, cache
+from app.utils.util import encode_mechanic_token
 
+@mechanics_bp.route("/login", methods=['POST'])
+def login():
+    
+    try:
+        credentials = login_schema.load(request.json)
+        
+        email = credentials['email']
+        password = credentials['password']
+    
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    query = select(Mechanic).where(Mechanic.email == email)
+    mechanic = db.session.execute(query).scalars().first()
+    
+    if mechanic and mechanic.password == password:
+        token = encode_mechanic_token(mechanic.id)
+        
+        response = {
+            "status": "success",
+            "message": "Login successful",
+            "token": token
+        }
+        return jsonify(response), 200
+    else:
+        return jsonify({"error": "Invalid email or password"}), 401
+    
 # CREATE NEW MECHANIC
 
 @mechanics_bp.route("/", methods=['POST'])
@@ -79,5 +107,6 @@ def most_tickets_worked():
     mechanics = db.session.execute(query).scalars().all()
     
     # Sort mechanics by the number of service tickets they are assigned to. "Reverse=True" ensures that the mechanic with the most tickets appears first in the list.
-    mechanics.sort(key=lambda mechanic: len(mechanic.service_tickets), reverse=True)
+    mechanics = sorted(mechanics, key=lambda mechanic: len(mechanic.service_tickets), reverse=True)
+    
     return mechanics_schema.jsonify(mechanics), 200

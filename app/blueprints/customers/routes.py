@@ -8,13 +8,17 @@ from . import customers_bp
 from app.extensions import limiter, cache
 from app.utils.util import encode_token, token_required
 
+# LOGIN CUSTOMER
+
 @customers_bp.route("/login", methods=['POST'])
 def login():
     
     try:
         credentials = login_schema.load(request.json)
+        
         email = credentials['email']
         password = credentials['password']
+    
     except ValidationError as e:
         return jsonify(e.messages), 400
     
@@ -56,17 +60,15 @@ def create_customer():
 # GET/READ EXISTING CUSTOMER
 
 @customers_bp.route("/", methods=['GET'])
+@cache.cached(timeout=60)
 def get_customers():
-    try:
-        page = int(request.args.get('page'))
-        per_page = int(request.args.get('per_page'))
-        query = select(Customer)
-        customers = db.paginate(query, page=page, per_page=per_page)
-        return customers_schema.jsonify(customers), 200
-    except:
-        query = select(Customer)
-        customers = db.session.execute(query).scalars().all()
-        return customers_schema.jsonify(customers), 200
+    page = (request.args.get('page', type=int, default=1))
+    per_page = (request.args.get('per_page', type=int, default=5))
+        
+    query = select(Customer)
+    customers = db.paginate(query, page=page, per_page=per_page)
+        
+    return customers_schema.jsonify(customers.items), 200
 
 # GET/READ SPECIFIC CUSTOMER
 
@@ -93,7 +95,7 @@ def update_customer(token_customer_id, customer_id):
         return jsonify({"error": "Customer not found."}), 404
     
     try:
-        customer_data = customer_schema.load(request.json)
+        customer_data = customer_schema.load(request.json, partial=True)
     except ValidationError as e:
         return jsonify(e.messages), 400
     
@@ -105,7 +107,7 @@ def update_customer(token_customer_id, customer_id):
 
 # DELETE EXISTING CUSTOMER 
 
-@customers_bp.route("/delete-account", methods=['DELETE'])
+@customers_bp.route("/<int:customer_id>/delete-account", methods=['DELETE'])
 @token_required
 def delete_customer(token_customer_id, customer_id):
     if token_customer_id != customer_id:

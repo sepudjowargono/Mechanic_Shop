@@ -6,6 +6,8 @@ class Service_TicketSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Service_Ticket
         include_fk = True
+        include_relationships = True
+        load_instance = True
         
 class EditTicketSchema(ma.Schema):
     add_mechanic_ids = fields.List(fields.Integer(), required=False)
