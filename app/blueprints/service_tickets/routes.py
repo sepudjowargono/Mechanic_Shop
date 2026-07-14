@@ -13,21 +13,20 @@ from app.utils.util import mechanic_token_required
 @service_tickets_bp.route("/", methods=['POST'])
 @mechanic_token_required
 @limiter.limit("10 per minute") # Rate limiting is applied because creating new service ticket records is a sensitive operation. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
-def create_service_ticket():
+def create_service_ticket(token_mechanic_id):
     try:
-        service_ticket_data = service_ticket_schema.load(request.json)
+        new_service_ticket = service_ticket_schema.load(request.json)
     except ValidationError as e:
         return jsonify(e.messages), 400
-
-    customer_id = service_ticket_data.get("customer_id")
-    customer = db.session.get(Customer, customer_id)
+    
+    customer = db.session.get(Customer, new_service_ticket.customer_id)
+    
     if not customer:
-        return jsonify({"error": "Customer not found. Please try again or create a customer account."}), 404
-
-    new_service_ticket = Service_Ticket(**service_ticket_data)
-
+        return jsonify({"error": "Customer not found"}), 404
+    
     db.session.add(new_service_ticket)
     db.session.commit()
+    
     return service_ticket_schema.jsonify(new_service_ticket), 201
 
 # GET/READ ALL EXISTING SERVICE TICKETS
@@ -35,7 +34,7 @@ def create_service_ticket():
 @service_tickets_bp.route("/", methods=['GET'])
 @mechanic_token_required
 @cache.cached(timeout=60) # Caching is applied because service tickets may be viewed multiple times within a short period. Caching helps reduce unnecessary database queries, improving response times and overall API efficiency.
-def get_service_tickets():
+def get_service_tickets(token_mechanic_id):
     query = select(Service_Ticket)
     service_tickets = db.session.execute(query).scalars().all()
     
@@ -45,8 +44,8 @@ def get_service_tickets():
 
 @service_tickets_bp.route("/<int:service_ticket_id>/assign-mechanic/<int:mechanic_id>", methods=["PUT"])
 @mechanic_token_required
-@limiter.limit("10 per minute") # Rate limiting is applied because this route modifies existing serice ticket records by assigning mechanics. Limiting requests helps prevent accidental duplicate tickets, spam requests and excessive database activity that could affect system performance and data integrity.
-def assign_mechanic(service_ticket_id, mechanic_id):
+@limiter.limit("10 per minute") # Rate limiting is applied because this route modifies existing service ticket records by assigning mechanics. Limiting requests helps prevent accidental duplicate tickets, spam requests and excessive database activity that could affect system performance and data integrity.
+def assign_mechanic(token_mechanic_id, service_ticket_id, mechanic_id):
     ticket = db.session.get(Service_Ticket, service_ticket_id)
     mechanic = db.session.get(Mechanic, mechanic_id)
     
@@ -70,7 +69,7 @@ def assign_mechanic(service_ticket_id, mechanic_id):
 @service_tickets_bp.route("/<int:service_ticket_id>/remove-mechanic/<int:mechanic_id>", methods=["PUT"])
 @mechanic_token_required
 @limiter.limit("5 per minute") # Rate limiting is applied because this route modifies existing service ticket records by unassigning mechanics. Limiting requests helps prevent accidental duplicate tickets, spam requests and excessive database activity that could affect system performance and data integrity.
-def remove_mechanic(service_ticket_id, mechanic_id):
+def remove_mechanic(token_mechanic_id, service_ticket_id, mechanic_id):
     ticket = db.session.get(Service_Ticket, service_ticket_id)
     mechanic = db.session.get(Mechanic, mechanic_id)
     
@@ -93,7 +92,7 @@ def remove_mechanic(service_ticket_id, mechanic_id):
 #ADVANCED ENDPOINT THAT ALLOWS ADDING AND REMOVING MULTIPLE MECHANICS FROM A SERVICE TICKET IN ONE REQUEST
 @service_tickets_bp.route("/<int:service_ticket_id>/edit-mechanics", methods=["PUT"])
 @mechanic_token_required
-def edit_ticket_mechanics(service_ticket_id):
+def edit_ticket_mechanics(token_mechanic_id, service_ticket_id):
     try:
         edit_mechanics = cast(dict[str, Any], edit_ticket_schema.load(request.json))
         
@@ -132,7 +131,7 @@ def edit_ticket_mechanics(service_ticket_id):
 @service_tickets_bp.route("/<int:service_ticket_id>/add-part/<int:inventory_item_id>", methods=["PUT"])
 @mechanic_token_required
 @limiter.limit("10 per minute") 
-def add_part_to_service_ticket(service_ticket_id, inventory_item_id):
+def add_part_to_service_ticket(token_mechanic_id, service_ticket_id, inventory_item_id):
     ticket = db.session.get(Service_Ticket, service_ticket_id)
     inventory_item = db.session.get(Inventory, inventory_item_id)
 

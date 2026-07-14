@@ -16,8 +16,8 @@ def login():
     try:
         credentials = login_schema.load(request.json)
         
-        email = credentials['email']
-        password = credentials['password']
+        email = credentials.email
+        password = credentials.password
     
     except ValidationError as e:
         return jsonify(e.messages), 400
@@ -43,16 +43,17 @@ def login():
 @limiter.limit("5 per minute") # This route is rate limited because it creates new records in the database. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
 def create_customer():
     try:
-        customer_data = customer_schema.load(request.json)
+        new_customer = customer_schema.load(request.json)
     except ValidationError as e:
         return jsonify(e.messages), 400
     
-    query = select(Customer).where(Customer.email == customer_data['email'])
-    existing_customer = db.session.execute(query).scalars().all()
-    if existing_customer:
-        return jsonify({"error": "Email already associated with an account."}), 400
+    query = select(Customer).where(Customer.email == new_customer.email)
     
-    new_customer = Customer(**customer_data)
+    existing_customer = db.session.execute(query).scalars().first()
+    
+    if existing_customer:
+        return jsonify({"error": "Email already associated with an existing customer account."}), 400
+    
     db.session.add(new_customer)
     db.session.commit()
     return customer_schema.jsonify(new_customer), 201
@@ -60,7 +61,7 @@ def create_customer():
 # GET/READ EXISTING CUSTOMER
 
 @customers_bp.route("/", methods=['GET'])
-@cache.cached(timeout=60)
+@cache.cached(timeout=30)
 def get_customers():
     page = (request.args.get('page', type=int, default=1))
     per_page = (request.args.get('per_page', type=int, default=5))
@@ -95,12 +96,19 @@ def update_customer(token_customer_id, customer_id):
         return jsonify({"error": "Customer not found."}), 404
     
     try:
-        customer_data = customer_schema.load(request.json, partial=True)
+        update_customer_data = customer_schema.load(
+            request.json, 
+            partial=True
+        )
     except ValidationError as e:
         return jsonify(e.messages), 400
     
-    for key, value in customer_data.items():
-        setattr(customer, key, value)
+    for field in request.json.keys():
+        setattr(
+            customer, 
+            field, 
+            getattr(update_customer_data, field)
+        )
         
     db.session.commit()
     return customer_schema.jsonify(customer), 200

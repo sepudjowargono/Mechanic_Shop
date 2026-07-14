@@ -13,7 +13,7 @@ from app.utils.util import mechanic_token_required
 @inventory_bp.route("/", methods=['POST'])
 @mechanic_token_required
 @limiter.limit("5 per minute") # Rate limiting is applied because creating new inventory records is a sensitive operation. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
-def create_inventory():
+def create_inventory(token_mechanic_id):
     try:
         new_inventory = inventory_schema.load(request.json)
     except ValidationError as e:
@@ -36,7 +36,7 @@ def create_inventory():
 @inventory_bp.route("/", methods=['GET'])
 @mechanic_token_required
 @cache.cached(timeout=60)
-def get_inventory():
+def get_inventory(token_mechanic_id):
     query = select(Inventory)
     inventory = db.session.execute(query).scalars().all()
     
@@ -47,7 +47,7 @@ def get_inventory():
 @inventory_bp.route("/<int:inventory_id>", methods=['PUT'])
 @mechanic_token_required
 @limiter.limit("5 per minute") # Rate limiting is applied because updating inventory records is a sensitive operation. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
-def update_inventory(inventory_id):
+def update_inventory(token_mechanic_id, inventory_id):
     inventory_item = db.session.get(Inventory, inventory_id)
     
     if not inventory_item:
@@ -72,7 +72,7 @@ def update_inventory(inventory_id):
 @inventory_bp.route("/<int:inventory_id>", methods=['DELETE'])
 @mechanic_token_required
 @limiter.limit("5 per minute") # Rate limiting is applied because deleting inventory records is a sensitive operation. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
-def delete_inventory(inventory_id):
+def delete_inventory(token_mechanic_id, inventory_id):
     inventory_item = db.session.get(Inventory, inventory_id)
     
     if not inventory_item: 

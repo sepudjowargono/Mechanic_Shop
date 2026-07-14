@@ -1,3 +1,5 @@
+from marshmallow import fields
+
 from app.extensions import ma
 from app.models import Inventory
 
@@ -5,7 +7,7 @@ class InventorySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Inventory
         include_relationships = True
-        load_instance = True
+        load_instance = True 
         
 inventory_schema = InventorySchema()
 inventories_schema = InventorySchema(many=True)

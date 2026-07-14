@@ -7,14 +7,16 @@ from . import mechanics_bp
 from app.extensions import limiter, cache
 from app.utils.util import encode_mechanic_token
 
+# LOGIN MECHANIC
+
 @mechanics_bp.route("/login", methods=['POST'])
 def login():
     
     try:
         credentials = login_schema.load(request.json)
         
-        email = credentials['email']
-        password = credentials['password']
+        email = credentials.email
+        password = credentials.password
     
     except ValidationError as e:
         return jsonify(e.messages), 400
@@ -40,18 +42,23 @@ def login():
 @limiter.limit("5 per minute") # Rate limiting is applied because creating new mechanic records is a sensitive operation. Limiting requests helps prevent abuse, spam, accidental duplicate submissions, and excessive traffic that could overwhelm the server or database.
 def create_mechanic():
     try:
-        mechanic_data = mechanic_schema.load(request.json)
+        new_mechanic = mechanic_schema.load(request.json)
     except ValidationError as e:
         return jsonify(e.messages), 400
-    
-    query = select(Mechanic).where(Mechanic.email == mechanic_data['email'])
-    existing_mechanic = db.session.execute(query).scalars().all()
+
+    query = select(Mechanic).where(
+        Mechanic.email == new_mechanic.email
+    )
+    existing_mechanic = db.session.execute(query).scalars().first()
+
     if existing_mechanic:
-        return jsonify({"error": "Email already associated with a mechanic employee."}), 400
-    
-    new_mechanic = Mechanic(**mechanic_data)
+        return jsonify({
+            "error": "Email already associated with a mechanic employee."
+        }), 400
+
     db.session.add(new_mechanic)
     db.session.commit()
+
     return mechanic_schema.jsonify(new_mechanic), 201
 
 # GET/READ EXISTING MECHANIC
@@ -59,8 +66,11 @@ def create_mechanic():
 @mechanics_bp.route("/", methods=['GET'])
 @cache.cached(timeout=60) # Caching is applied because the list of mechanics is requested frequently and changes infrequently. Caching the response reduces database load and allows the API to respond more quickly to repeated requests for the same data, improving performance and user experience.
 def get_mechanics():
+    page = (request.args.get('page', type=int, default=1))
+    per_page = (request.args.get('per_page', type=int, default=5))
+    
     query = select(Mechanic)
-    mechanics = db.session.execute(query).scalars().all()
+    mechanics = db.paginate(query, page=page, per_page=per_page)
     
     return mechanics_schema.jsonify(mechanics), 200
 
@@ -69,20 +79,28 @@ def get_mechanics():
 @mechanics_bp.route("/<int:mechanic_id>", methods=['PUT'])
 @limiter.limit("5 per minute")
 def update_mechanic(mechanic_id):
-    mechanic = db.session.get (Mechanic, mechanic_id)
-    
+    mechanic = db.session.get(Mechanic, mechanic_id)
+
     if not mechanic:
         return jsonify({"error": "Mechanic not found."}), 404
-    
+
     try:
-        mechanic_data = mechanic_schema.load(request.json)
+        updated_mechanic_data = mechanic_schema.load(
+            request.json,
+            partial=True
+        )
     except ValidationError as e:
         return jsonify(e.messages), 400
-    
-    for key, value in mechanic_data.items():
-        setattr(mechanic, key, value)
-        
+
+    for field in request.json.keys():
+        setattr(
+            mechanic,
+            field,
+            getattr(updated_mechanic_data, field)
+        )
+
     db.session.commit()
+
     return mechanic_schema.jsonify(mechanic), 200
 
 # DELETE EXISTING MECHANIC

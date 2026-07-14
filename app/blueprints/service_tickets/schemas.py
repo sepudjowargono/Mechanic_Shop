@@ -9,6 +9,8 @@ class Service_TicketSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
         load_instance = True
         
+    customer = fields.Nested('CustomerSchema', only=('name', 'email'))
+        
 class EditTicketSchema(ma.Schema):
     add_mechanic_ids = fields.List(fields.Integer(), required=False)
     remove_mechanic_ids = fields.List(fields.Integer(), required=False)
