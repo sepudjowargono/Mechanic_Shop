@@ -33,7 +33,7 @@ def create_service_ticket(token_mechanic_id):
 
 @service_tickets_bp.route("/", methods=['GET'])
 @mechanic_token_required
-@cache.cached(timeout=60) # Caching is applied because service tickets may be viewed multiple times within a short period. Caching helps reduce unnecessary database queries, improving response times and overall API efficiency.
+@cache.cached(timeout=30) # Caching is applied because service tickets may be viewed multiple times within a short period. Caching helps reduce unnecessary database queries, improving response times and overall API efficiency.
 def get_service_tickets(token_mechanic_id):
     query = select(Service_Ticket)
     service_tickets = db.session.execute(query).scalars().all()

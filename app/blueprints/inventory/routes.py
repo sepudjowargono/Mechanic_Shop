@@ -35,7 +35,7 @@ def create_inventory(token_mechanic_id):
 
 @inventory_bp.route("/", methods=['GET'])
 @mechanic_token_required
-@cache.cached(timeout=60)
+@cache.cached(timeout=30)
 def get_inventory(token_mechanic_id):
     query = select(Inventory)
     inventory = db.session.execute(query).scalars().all()

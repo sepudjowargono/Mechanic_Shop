@@ -64,7 +64,7 @@ def create_mechanic():
 # GET/READ EXISTING MECHANIC
 
 @mechanics_bp.route("/", methods=['GET'])
-@cache.cached(timeout=60) # Caching is applied because the list of mechanics is requested frequently and changes infrequently. Caching the response reduces database load and allows the API to respond more quickly to repeated requests for the same data, improving performance and user experience.
+@cache.cached(timeout=30) # Caching is applied because the list of mechanics is requested frequently and changes infrequently. Caching the response reduces database load and allows the API to respond more quickly to repeated requests for the same data, improving performance and user experience.
 def get_mechanics():
     page = (request.args.get('page', type=int, default=1))
     per_page = (request.args.get('per_page', type=int, default=5))

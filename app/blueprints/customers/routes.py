@@ -74,7 +74,7 @@ def get_customers():
 # GET/READ SPECIFIC CUSTOMER
 
 @customers_bp.route("/<int:customer_id>", methods=['GET'])
-@cache.cached(timeout=60) # Caching is applied because customer information is read frequently but does not change with every request. Storing the response for 60 seconds reduces repeated database queries and improves API performance.
+@cache.cached(timeout=30) # Caching is applied because customer information is read frequently but does not change with every request. Storing the response for 60 seconds reduces repeated database queries and improves API performance.
 def get_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     
