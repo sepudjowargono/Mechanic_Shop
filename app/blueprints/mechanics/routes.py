@@ -47,13 +47,14 @@ def create_mechanic():
         return jsonify(e.messages), 400
 
     query = select(Mechanic).where(
-        Mechanic.email == new_mechanic.email
+        (Mechanic.email == new_mechanic.email) |
+        (Mechanic.phone == new_mechanic.phone)
     )
     existing_mechanic = db.session.execute(query).scalars().first()
 
     if existing_mechanic:
         return jsonify({
-            "error": "Email already associated with a mechanic employee."
+            "error": "Email or phone already associated with a mechanic employee."
         }), 400
 
     db.session.add(new_mechanic)
@@ -72,7 +73,7 @@ def get_mechanics():
     query = select(Mechanic)
     mechanics = db.paginate(query, page=page, per_page=per_page)
     
-    return mechanics_schema.jsonify(mechanics), 200
+    return mechanics_schema.jsonify(mechanics.items), 200
 
 # UPDATE SPECIFIC EXISTING MECHANIC
 
@@ -111,11 +112,14 @@ def delete_mechanic(mechanic_id):
     mechanic = db.session.get(Mechanic, mechanic_id)
     
     if not mechanic: 
-        return jsonify({"error": "Mechanic not found."}), 400
+        return jsonify({"error": "Mechanic not found."}), 404
     
     db.session.delete(mechanic)
     db.session.commit()
-    return jsonify({"message": f'Mechanic Id: {mechanic_id} has been deleted successfully'})
+    return jsonify({
+        "message": f'Mechanic Id: {mechanic_id} has been deleted successfully',
+        "status": "success"
+    }), 200
 
 # LIST OF MECHANICS IN ORDER OF WHO HAS WORKED ON THE MOST TICKETS
 @mechanics_bp.route("/most-tickets", methods=['GET'])

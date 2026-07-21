@@ -124,11 +124,11 @@ def delete_customer(token_customer_id, customer_id):
     customer = db.session.get(Customer, customer_id)
     
     if not customer: 
-        return jsonify({"error": "Customer not found."}), 400
+        return jsonify({"error": "Customer not found."}), 404
     
     db.session.delete(customer)
     db.session.commit()
-    return jsonify({"message": f'Customer Id: {customer_id} has been deleted successfully'})
+    return jsonify({"message": f'Customer Id: {customer_id} has been deleted successfully'}), 200
 
 # GET SERVICE TICKETS ASSOCIATED WITH A SPECIFIC CUSTOMER
 @customers_bp.route("/<int:customer_id>/my-service-tickets", methods=['GET'])

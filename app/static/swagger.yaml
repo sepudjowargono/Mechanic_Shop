@@ -16,6 +16,7 @@ securityDefinitions:
     type: "apiKey"
     name: "Authorization"
     in: "header"
+    description: "Enter the JWT token using the format: Bearer <token>"
 
 # Endpoints
 paths:
@@ -39,9 +40,9 @@ paths:
             $ref: "#/definitions/LoginResponse"
           examples:
             application/json:
-              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE2MzQyMzQwMDB9.abc123"
               message: "Login successful"
               status: "success"
+              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE2MzQyMzQwMDB9.abc123"
 
   /customers: # endpoint for creating a new customer
     post: # Post request
@@ -68,8 +69,6 @@ paths:
               email: "johndoe@hotmail.com"
               phone: "123-456-7890"
               password: "123password"
-              message: "Customer account created successfully"
-              status: "success"
 
     get: # Get request
       tags:
@@ -81,6 +80,18 @@ paths:
           description: "List of all customers retrieved successfully"
           schema:
             $ref: "#/definitions/AllCustomers"
+          examples:
+            application/json:
+              - id: 1
+                name: "John Doe"
+                email: "johndoe@hotmail.com"
+                phone: "123-456-7890"
+                password: "123password"
+              - id: 2
+                name: "Jane Smith"
+                email: "janesmith@hotmail.com"
+                phone: "987-654-3210"
+                password: "securepassword"
 
   /customers/{customer_id}:
     get:
@@ -99,6 +110,13 @@ paths:
           description: "Customer information retrieved successfully"
           schema:
             $ref: "#/definitions/SingleCustomer"
+          examples:
+            application/json:
+              id: 1
+              name: "John Doe"
+              email: "johndoe@hotmail.com"
+              phone: "123-456-7890"
+              password: "123password"
 
   /customers/{customer_id}/update-account:
     put:
@@ -132,8 +150,6 @@ paths:
               email: "johndoe@hotmail.com"
               phone: "123-456-7890"
               password: "123password"
-              message: "Customer account updated successfully"
-              status: "success"
 
   /customers/{customer_id}/delete-account:
     delete:
@@ -156,8 +172,39 @@ paths:
             $ref: "#/definitions/DeleteCustomerResponse"
           examples:
             application/json:
-              message: "Customer account <customer_id> deleted successfully."
-              status: "success"
+              message: "Customer Id: 1 has been deleted successfully"
+
+  /customers/{customer_id}/my-service-tickets:
+    get:
+      tags:
+        - "Customers"
+      summary: "Endpoint to retrieve all service tickets for a specific customer."
+      description: "This endpoint retrieves a list of all service tickets associated with a specific customer in the Mechanic Shop system based on their unique customer ID. This is a token authenticated route, and the user must be logged in to view their service tickets."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "path"
+          name: "customer_id"
+          description: "ID of the customer whose service tickets are to be retrieved."
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "Customer service tickets retrieved successfully"
+          schema:
+            $ref: "#/definitions/AllServiceTicketsResponse"
+          examples:
+            application/json:
+              - customer:
+                  name: "John Doe"
+                  email: "johndoe@hotmail.com"
+                customer_id: 1
+                id: 1
+                inventory: [1, 2]
+                mechanics: [1, 2]
+                service_date: "2024-06-15"
+                service_desc: "Oil change and tire rotation"
+                vin: "1HGCM82633A123456"
 
   /mechanics/login:
     post:
@@ -179,9 +226,9 @@ paths:
             $ref: "#/definitions/LoginResponse"
           examples:
             application/json:
-              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE2MzQyMzQwMDB9.abc123"
               message: "Login successful"
               status: "success"
+              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE2MzQyMzQwMDB9.abc123"
 
   /mechanics: # endpoint for creating a new mechanic
     post: # Post request
@@ -220,6 +267,20 @@ paths:
           description: "List of all mechanics retrieved successfully"
           schema:
             $ref: "#/definitions/AllMechanics"
+          examples:
+            application/json:
+              - id: 1
+                name: "Jane Smith"
+                email: "jane.smith@example.com"
+                phone: "123-456-7890"
+                salary: 50000.00
+                password: "securepassword"
+              - id: 2
+                name: "John Doe"
+                email: "john.doe@example.com"
+                phone: "987-654-3210"
+                salary: 60000.00
+                password: "securepassword"
 
   /mechanics/{mechanic_id}:
     put:
@@ -271,7 +332,7 @@ paths:
             $ref: "#/definitions/DeleteMechanicResponse"
           examples:
             application/json:
-              message: "Mechanic account <mechanic_id> deleted successfully."
+              message: "Mechanic Id: 1 has been deleted successfully"
               status: "success"
 
   /mechanics/most-tickets:
@@ -285,6 +346,14 @@ paths:
           description: "List of mechanics with the most tickets retrieved successfully"
           schema:
             $ref: "#/definitions/MechanicMostTickets"
+          examples:
+            application/json:
+              - id: 1
+                name: "Jane Smith"
+                email: "jane.smith@example.com"
+                phone: "123-456-7890"
+                salary: 50000.00
+                password: "securepassword"
 
   /inventory: # Endpoint for creating a new inventory item
     post: # Post request
@@ -311,8 +380,6 @@ paths:
               id: 1
               part_name: "Brake Pads"
               price: 49.99
-              message: "Inventory item created successfully"
-              status: "success"
 
     get: # Get request
       tags:
@@ -326,6 +393,14 @@ paths:
           description: "List of all inventory items retrieved successfully"
           schema:
             $ref: "#/definitions/AllInventory"
+          examples:
+            application/json:
+              - id: 1
+                part_name: "Brake Pads"
+                price: 49.99
+              - id: 2
+                part_name: "Oil Filter"
+                price: 15.99
 
   /inventory/{inventory_id}:
     put:
@@ -357,9 +432,6 @@ paths:
               id: 1
               part_name: "Brake Pads"
               price: 49.99
-              message: "Inventory item updated successfully."
-              status: "success"
-
     delete:
       tags:
         - "Inventory"
@@ -380,7 +452,7 @@ paths:
             $ref: "#/definitions/DeleteInventoryResponse"
           examples:
             application/json:
-              message: "Inventory item <inventory_id> deleted successfully."
+              message: "Inventory item Brake Pads has been deleted successfully"
               status: "success"
 
   /service_tickets: # Endpoint for creating a new service ticket
@@ -405,13 +477,16 @@ paths:
             $ref: "#/definitions/CreateServiceTicketResponse"
           examples:
             application/json:
+              customer:
+                name: "John Doe"
+                email: "johndoe@hotmail.com"
+              customer_id: 1
               id: 1
-              vin: "1HGCM82633A123456"
+              inventory: []
+              mechanics: []
               service_date: "2024-06-15"
               service_desc: "Oil change and tire rotation"
-              customer_id: 1
-              message: "Service ticket created successfully."
-              status: "success"
+              vin: "1HGCM82633A123456"
 
     get: # Get request
       tags:
@@ -424,7 +499,29 @@ paths:
         200:
           description: "List of all service tickets retrieved successfully."
           schema:
-            $ref: "#/definitions/AllServiceTickets"
+            $ref: "#/definitions/AllServiceTicketsResponse"
+          examples:
+            application/json:
+              - customer:
+                  name: "John Doe"
+                  email: "johndoe@hotmail.com"
+                customer_id: 1
+                id: 1
+                inventory: [1, 2]
+                mechanics: [1, 2]
+                service_date: "2024-06-15"
+                service_desc: "Oil change and tire rotation"
+                vin: "1HGCM82633A123456"
+              - customer:
+                  name: "Jane Smith"
+                  email: "janesmith@hotmail.com"
+                customer_id: 2
+                id: 2
+                inventory: [3]
+                mechanics: [3]
+                service_date: "2024-06-20"
+                service_desc: "Brake pad replacement"
+                vin: "2FTRX18W1XCA12345"
 
   /service_tickets/{service_ticket_id}/assign-mechanic/{mechanic_id}:
     put:
@@ -452,14 +549,8 @@ paths:
             $ref: "#/definitions/AssignMechanicToTicketResponse"
           examples:
             application/json:
-              id: 1
-              vin: "1HGCM82633A123456"
-              service_date: "2024-06-15"
-              service_desc: "Oil change and tire rotation"
-              customer_id: 1
-              mechanic_id: 2
-              message: "Mechanic assigned to service ticket successfully."
-              status: "success"
+              message: "Mechanic 2 assigned to service ticket 1 successfully."
+              current_assigned_mechanics: [1, 2]
 
   /service_tickets/{service_ticket_id}/remove-mechanic/{mechanic_id}:
     put:
@@ -487,14 +578,8 @@ paths:
             $ref: "#/definitions/RemoveMechanicFromTicketResponse"
           examples:
             application/json:
-              id: 1
-              vin: "1HGCM82633A123456"
-              service_date: "2024-06-15"
-              service_desc: "Oil change and tire rotation"
-              customer_id: 1
-              mechanic_id: 2
-              message: "Mechanic removed from service ticket successfully."
-              status: "success"
+              message: "Mechanic 2 removed from service ticket 1 successfully."
+              current_assigned_mechanics: [1]
 
   /service_tickets/{service_ticket_id}/edit-mechanics:
     put:
@@ -518,17 +603,15 @@ paths:
             $ref: "#/definitions/EditTicketMechanicsPayload"
       responses:
         200:
-          description: "Mechanics updated for service ticket successfully."
+          description: "Service ticket mechanics updated successfully."
           schema:
             $ref: "#/definitions/EditTicketMechanicsResponse"
           examples:
             application/json:
-              message: "Mechanics updated for service tickets successfully."
-              current_assigned_mechanics:
-                - 2
-                - 4
+              message: "Service ticket mechanics updated successfully."
+              current_assigned_mechanics: [2, 4]
 
-  /service_tickets/{service_ticket_id}/add-part/{inventory_id}:
+  /service_tickets/{service_ticket_id}/add-part/{inventory_item_id}:
     put:
       tags:
         - "Service Tickets"
@@ -543,25 +626,19 @@ paths:
           required: true
           type: "integer"
         - in: "path"
-          name: "inventory_id"
+          name: "inventory_item_id"
           description: "ID of the inventory item to be assigned to the service ticket."
           required: true
           type: "integer"
       responses:
         200:
-          description: "Inventory item {inventory_id} assigned to service ticket {service_ticket_id} successfully."
+          description: "Inventory item assigned to the service ticket successfully."
           schema:
             $ref: "#/definitions/AssignInventoryToTicketResponse"
           examples:
             application/json:
-              id: 1
-              vin: "1HGCM82633A123456"
-              service_date: "2024-06-15"
-              service_desc: "Oil change and tire rotation"
-              customer_id: 1
-              inventory_id: 3
-              message: "Inventory item assigned to service ticket successfully."
-              status: "success"
+              message: "Part 3 added to service ticket 1 successfully."
+              current_assigned_parts: [3]
 
 definitions:
   LoginCredentials:
@@ -578,11 +655,11 @@ definitions:
   LoginResponse:
     type: "object"
     properties:
-      token:
-        type: "string"
       message:
         type: "string"
       status:
+        type: "string"
+      token:
         type: "string"
 
   CreateCustomerPayload:
@@ -614,10 +691,6 @@ definitions:
       phone:
         type: "string"
       password:
-        type: "string"
-      message:
-        type: "string"
-      status:
         type: "string"
 
   AllCustomers:
@@ -675,18 +748,25 @@ definitions:
         type: "string"
       password:
         type: "string"
-      message:
-        type: "string"
-      status:
-        type: "string"
 
   DeleteCustomerResponse:
     type: "object"
     properties:
       message:
         type: "string"
-      status:
+
+  ServiceTicketCustomer:
+    type: "object"
+    properties:
+      email:
         type: "string"
+      name:
+        type: "string"
+
+  AllServiceTicketsResponse:
+    type: "array"
+    items:
+      $ref: "#/definitions/ServiceTicketResponse"
 
   CreateMechanicPayload:
     type: "object"
@@ -724,10 +804,6 @@ definitions:
         type: "number"
         format: "float"
       password:
-        type: "string"
-      message:
-        type: "string"
-      status:
         type: "string"
 
   AllMechanics:
@@ -780,10 +856,6 @@ definitions:
         format: "float"
       password:
         type: "string"
-      message:
-        type: "string"
-      status:
-        type: "string"
 
   DeleteMechanicResponse:
     type: "object"
@@ -834,10 +906,6 @@ definitions:
       price:
         type: "number"
         format: "float"
-      message:
-        type: "string"
-      status:
-        type: "string"
 
   AllInventory:
     type: "array"
@@ -871,10 +939,6 @@ definitions:
       price:
         type: "number"
         format: "float"
-      message:
-        type: "string"
-      status:
-        type: "string"
 
   DeleteInventoryResponse:
     type: "object"
@@ -905,80 +969,27 @@ definitions:
   CreateServiceTicketResponse:
     type: "object"
     properties:
-      id:
-        type: "integer"
-      vin:
-        type: "string"
-      service_date:
-        type: "string"
-        format: "date"
-      service_desc:
-        type: "string"
-      customer_id:
-        type: "integer"
-      message:
-        type: "string"
-      status:
-        type: "string"
-
-  AllServiceTickets:
-    type: "array"
-    items:
-      type: "object"
-      properties:
-        id:
-          type: "integer"
-        vin:
-          type: "string"
-        service_date:
-          type: "string"
-          format: "date"
-        service_desc:
-          type: "string"
-        customer_id:
-          type: "integer"
+      $ref: "#/definitions/ServiceTicketResponse"
 
   AssignMechanicToTicketResponse:
     type: "object"
     properties:
-      id:
-        type: "integer"
-      vin:
-        type: "string"
-      service_date:
-        type: "string"
-        format: "date"
-      service_desc:
-        type: "string"
-      customer_id:
-        type: "integer"
-      mechanic_id:
-        type: "integer"
       message:
         type: "string"
-      status:
-        type: "string"
+      current_assigned_mechanics:
+        type: "array"
+        items:
+          type: "integer"
 
   RemoveMechanicFromTicketResponse:
     type: "object"
     properties:
-      id:
-        type: "integer"
-      vin:
-        type: "string"
-      service_date:
-        type: "string"
-        format: "date"
-      service_desc:
-        type: "string"
-      customer_id:
-        type: "integer"
-      mechanic_id:
-        type: "integer"
       message:
         type: "string"
-      status:
-        type: "string"
+      current_assigned_mechanics:
+        type: "array"
+        items:
+          type: "integer"
 
   EditTicketMechanicsPayload:
     type: "object"
@@ -991,9 +1002,6 @@ definitions:
         type: "array"
         items:
           type: "integer"
-    example:
-      add_mechanic_ids: [5, 6]
-      remove_mechanic_ids: [1, 3]
 
   EditTicketMechanicsResponse:
     type: "object"
@@ -1004,27 +1012,38 @@ definitions:
         type: "array"
         items:
           type: "integer"
-    example:
-      message: "Mechanics updated successfully."
-      current_assigned_mechanics: [2, 4]
 
   AssignInventoryToTicketResponse:
     type: "object"
     properties:
+      message:
+        type: "string"
+      current_assigned_parts:
+        type: "array"
+        items:
+          type: "integer"
+
+  ServiceTicketResponse:
+    type: "object"
+    properties:
+      customer:
+        $ref: "#/definitions/ServiceTicketCustomer"
+      customer_id:
+        type: "integer"
       id:
         type: "integer"
-      vin:
-        type: "string"
+      inventory:
+        type: "array"
+        items:
+          type: "integer"
+      mechanics:
+        type: "array"
+        items:
+          type: "integer"
       service_date:
         type: "string"
         format: "date"
       service_desc:
         type: "string"
-      customer_id:
-        type: "integer"
-      inventory_id:
-        type: "integer"
-      message:
-        type: "string"
-      status:
+      vin:
         type: "string"

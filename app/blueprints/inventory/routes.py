@@ -4,7 +4,6 @@ from marshmallow import ValidationError
 from sqlalchemy import select
 from app.models import Inventory, db
 from . import inventory_bp
-from app import db
 from app.extensions import limiter, cache
 from app.utils.util import mechanic_token_required
 
@@ -80,4 +79,8 @@ def delete_inventory(token_mechanic_id, inventory_id):
     
     db.session.delete(inventory_item)
     db.session.commit()
-    return jsonify({"message": f'Inventory item {inventory_item.part_name} has been deleted successfully'}), 200
+    
+    return jsonify({
+        "message": f'Inventory item {inventory_item.part_name} has been deleted successfully',
+        "status": "success"
+    }), 200
