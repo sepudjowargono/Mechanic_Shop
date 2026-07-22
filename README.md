@@ -1,6 +1,25 @@
 # 🔧 Mechanic Shop API
 
-A RESTful API built with **Flask**, **SQLAlchemy**, **Marshmallow**, **MySQL**, **JWT Authentication**, **Flask-Caching**, and **Flask-Limiter** using the **Application Factory Pattern**. This project simulates a mechanic shop management system by allowing users to manage customers, mechanics, inventory, service tickets, and the relationships between them.
+A RESTful API built with **Flask**, **SQLAlchemy**, **Marshmallow**, **MySQL**, **JWT Authentication**, **Swagger/OpenAPI Documentation**, **Flask-Caching**, **Flask-Limiter**, and **unittest** using the **Application Factory Pattern**.
+
+This project simulates a mechanic shop management system by allowing users to manage customers, mechanics, inventory, and service tickets while demonstrating secure authentication, authorization, API documentation, automated testing, caching, and rate limiting.
+
+---
+
+## ⭐ Project Highlights
+
+- RESTful API design
+- Application Factory Pattern
+- Blueprint architecture
+- JWT Authentication
+- Role-based authorization
+- Swagger/OpenAPI documentation
+- Automated unit testing
+- Flask-Caching
+- Flask-Limiter
+- SQLAlchemy ORM
+- Marshmallow validation
+- MySQL database
 
 ---
 
@@ -53,6 +72,8 @@ A RESTful API built with **Flask**, **SQLAlchemy**, **Marshmallow**, **MySQL**, 
 - Flask-Limiter
 - MySQL Connector
 - Postman
+- Flasgger (Swagger/OpenAPI)
+- unittest
 
 ---
 
@@ -157,6 +178,25 @@ Protected mechanic endpoints require a valid mechanic token before allowing modi
 
 ---
 
+## 📖 API Documentation
+
+Interactive API documentation is provided using **Swagger (OpenAPI)**.
+
+Swagger documentation includes:
+
+- Endpoint descriptions
+- Request parameters
+- Request body schemas
+- Response examples
+- Authentication requirements
+- Error responses
+
+After running the application, the documentation can be viewed by navigating to:
+
+```http://localhost:5000/apidocs/```
+
+---
+
 ## ✅ Error Handling
 
 The API includes validation and error handling for:
@@ -175,23 +215,59 @@ The API includes validation and error handling for:
 
 ## 🧪 Testing
 
-All endpoints were tested using **Postman**.
+This project includes both **manual** and **automated** testing.
 
-Testing included:
+### Manual Testing
 
-Customer authentication
-Mechanic authentication
-Customer CRUD operations
-Mechanic CRUD operations
-Inventory CRUD operations
-Service ticket creation
-Assigning mechanics
-Removing mechanics
-Editing multiple mechanic assignments
-Adding inventory parts to service tickets
-Pagination
-JWT-protected endpoints
-Error handling and validation
+API endpoints were tested using **Postman** to verify:
+
+- Customer authentication
+- Mechanic authentication
+- Customer CRUD operations
+- Mechanic CRUD operations
+- Inventory CRUD operations
+- Service ticket operations
+- Protected endpoints
+- Pagination
+- Error handling
+
+### Automated Testing
+
+Automated unit tests were written using Python's **unittest** framework.
+
+The test suite covers:
+
+- Customer routes
+- Mechanic routes
+- Inventory routes
+- Service Ticket routes
+- Successful requests
+- Validation errors
+- Authentication failures
+- Authorization checks
+- Resource not found responses
+- Advanced endpoints
+- Inventory assignment
+- Mechanic assignment
+
+Run the test suite with:
+
+```bash
+python -m unittest discover tests
+```
+
+---
+
+## ⚡ Performance & Security
+
+This API includes several features to improve security and performance:
+
+- JWT Authentication
+- Customer and Mechanic authorization
+- Flask-Limiter rate limiting
+- Flask-Caching for frequently accessed GET endpoints
+- Input validation with Marshmallow
+- SQLAlchemy ORM relationships
 
 ---
 
