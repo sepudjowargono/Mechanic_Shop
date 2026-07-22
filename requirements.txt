@@ -19,6 +19,7 @@ marshmallow-sqlalchemy==1.5.0
 mysql-connector-python==9.6.0
 ordered-set==4.1.0
 packaging==26.2
+PyJWT==2.13.0
 PyYAML==6.0.3
 SQLAlchemy==2.0.51
 typing_extensions==4.15.0
