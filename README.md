@@ -193,7 +193,7 @@ Swagger documentation includes:
 
 After running the application, the documentation can be viewed by navigating to:
 
-```http://localhost:5000/apidocs/```
+```http://localhost:5000/api/docs/```
 
 ---
 
