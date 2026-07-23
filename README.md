@@ -2,7 +2,23 @@
 
 A RESTful API built with **Flask**, **SQLAlchemy**, **Marshmallow**, **MySQL**, **JWT Authentication**, **Swagger/OpenAPI Documentation**, **Flask-Caching**, **Flask-Limiter**, and **unittest** using the **Application Factory Pattern**.
 
-This project simulates a mechanic shop management system by allowing users to manage customers, mechanics, inventory, and service tickets while demonstrating secure authentication, authorization, API documentation, automated testing, caching, and rate limiting.
+This project simulates a mechanic shop management system by allowing users to manage customers, mechanics, inventory, and service tickets while demonstrating secure authentication, authorization, API documentation, automated testing, cloud deployment, caching, rate limiting and continuous integration/continuous deployment. 
+
+---
+
+## 🔗 Live Links
+
+### Live API
+
+```https://mechanic-shop-xdn1.onrender.com```
+
+### Swagger Documentation
+
+```https://mechanic-shop-xdn1.onrender.com/api/docs/```
+
+### GitHub Repository
+
+```https://github.com/sepudjowargono/Mechanic_Shop```
 
 ---
 
@@ -20,6 +36,10 @@ This project simulates a mechanic shop management system by allowing users to ma
 - SQLAlchemy ORM
 - Marshmallow validation
 - MySQL database
+- PostgreSQL (Production)
+- Render cloud deployment
+- GitHub Actions CI/CD pipeline
+- Automatic deployment after successful testing
 
 ---
 
@@ -54,7 +74,7 @@ This project simulates a mechanic shop management system by allowing users to ma
 - Create inventory items (protected)
 - Retrieve inventory items (protected)
 - Update inventory items (protected)
-- Delete Inventory items (protected)
+- Delete inventory items (protected)
 
 ---
 
@@ -63,23 +83,31 @@ This project simulates a mechanic shop management system by allowing users to ma
 - Python
 - Flask
 - SQLAlchemy
-- Marshmallow
-- MySQL
 - Flask-SQLAlchemy
+- Marshmallow
 - Flask-Marshmallow
-- Flask-JWT
+- JWT Authentication (PyJWT)
 - Flask-Caching
 - Flask-Limiter
-- MySQL Connector
+- MySQL (Development)
+- PostgreSQL (Production)
+- Gunicorn
+- Psycopg2
+- Swagger / OpenAPI
 - Postman
-- Flasgger (Swagger/OpenAPI)
 - unittest
+- GitHub Actions
+- Render
 
 ---
 
 ## 📂 Project Structure
 
 ```
+.github/
+└── workflows/
+  └── main.yaml
+
 app/
 │
 ├── blueprints/
@@ -107,7 +135,7 @@ app/
 ├── extensions.py
 └── models.py
 │
-├── app.py
+├── flask_app.py
 └── config.py
 ```
 
@@ -125,7 +153,7 @@ The application follows the **Application Factory Pattern**, providing a clean, 
 | POST | /customers | Create a customer |
 | GET | /customers | Retrieve all customers (pagination supported) |
 | GET | /customers/<customer_id> | Retrieve one customer |
-| PUT | /customers/<customer_id>update-account | Update customer account (JWT Protected) |
+| PUT | /customers/<customer_id>/update-account | Update customer account (JWT Protected) |
 | DELETE | /customers/<customer_id> | Delete customer account (JWT Protected) |
 | GET | /customers/<customer_id>/my-service-tickets | Retrieve customer's service tickets (JWT Protected) |
 
@@ -133,7 +161,7 @@ The application follows the **Application Factory Pattern**, providing a clean, 
 
 | Method | Endpoint | Description |
 |---------|----------|-------------|
-| POST | /mechanics | Mechanic login |
+| POST | /mechanics/login | Mechanic login |
 | POST | /mechanics | Create mechanic |
 | GET | /mechanics | Retrieve all mechanics |
 | PUT | /mechanics/<mechanic_id> | Update mechanic |
@@ -144,12 +172,12 @@ The application follows the **Application Factory Pattern**, providing a clean, 
 
 | Method | Endpoint | Description |
 |---------|----------|-------------|
-| POST | /service-tickets | Create service ticket (JWT Protected) |
-| GET | /service-tickets | Retrieve all service tickets (JWT Protected) |
-| PUT | /service-tickets/<service_ticket_id>/assign-mechanic/<mechanic_id> | Assign mechanic (JWT Protected) |
-| PUT | /service-tickets/<service_ticket_id>/remove-mechanic/<mechanic_id> | Remove mechanic (JWT Protected) |
-| PUT | /service-tickets/<service_ticket_id>/edit-mechanics | Add and remove multiple mechanics (JWT Protected) |
-| PUT | /service-tickets/<service_ticket_id>/add-part/<inventory_item_id> | Add inventory part to service ticket (JWT Protected) |
+| POST | /service_tickets | Create service ticket (JWT Protected) |
+| GET | /service_tickets | Retrieve all service tickets (JWT Protected) |
+| PUT | /service_tickets/<service_ticket_id>/assign-mechanic/<mechanic_id> | Assign mechanic (JWT Protected) |
+| PUT | /service_tickets/<service_ticket_id>/remove-mechanic/<mechanic_id> | Remove mechanic (JWT Protected) |
+| PUT | /service_tickets/<service_ticket_id>/edit-mechanics | Add and remove multiple mechanics (JWT Protected) |
+| PUT | /service_tickets/<service_ticket_id>/add-part/<inventory_item_id> | Add inventory part to service ticket (JWT Protected) |
 
 ### Inventory
 
@@ -180,7 +208,15 @@ Protected mechanic endpoints require a valid mechanic token before allowing modi
 
 ## 📖 API Documentation
 
-Interactive API documentation is provided using **Swagger (OpenAPI)**.
+Interactive API documentation is available both locally and through the deployed application.
+
+### Local
+
+```http://localhost:5000/api/docs/```
+
+### Production
+
+```https://mechanic-shop-xdn1.onrender.com/api/docs/```
 
 Swagger documentation includes:
 
@@ -190,10 +226,6 @@ Swagger documentation includes:
 - Response examples
 - Authentication requirements
 - Error responses
-
-After running the application, the documentation can be viewed by navigating to:
-
-```http://localhost:5000/api/docs/```
 
 ---
 
@@ -221,12 +253,8 @@ This project includes both **manual** and **automated** testing.
 
 API endpoints were tested using **Postman** to verify:
 
-- Customer authentication
-- Mechanic authentication
-- Customer CRUD operations
-- Mechanic CRUD operations
-- Inventory CRUD operations
-- Service ticket operations
+- Authentication
+- CRUD operations
 - Protected endpoints
 - Pagination
 - Error handling
@@ -253,8 +281,40 @@ The test suite covers:
 Run the test suite with:
 
 ```bash
-python -m unittest discover tests
+python -m unittest discover -s tests -p "test_*.py"
 ```
+
+---
+
+## ☁️ Deployment
+
+The application is deployed to **Render** using a production configuration.
+
+Deployment includes:
+
+- PostgreSQL database hosted on Render
+- Gunicorn production server
+- Environment variables for sensitive configuration
+- HTTPS-enabled Swagger documentation
+- Production configuration using environment variables
+- Automatic database connection using PostgreSQL
+
+Sensitive information such as the database URI and secret key are stored securely using environment variables rather than being committed to the repository.
+
+---
+
+## 🚀 CI/CD Pipeline
+
+Continuous Integration and Continuous Deployment are implemented using **GitHub Actions**.
+
+The workflow automatically:
+
+- Builds the application
+- Installs project dependencies
+- Executes the automated unit tests
+- Deploys the latest version to Render only after all tests pass successfully
+
+This ensures that only tested code is deployed to production.
 
 ---
 
@@ -263,11 +323,13 @@ python -m unittest discover tests
 This API includes several features to improve security and performance:
 
 - JWT Authentication
-- Customer and Mechanic authorization
+- Role-based authorization
 - Flask-Limiter rate limiting
-- Flask-Caching for frequently accessed GET endpoints
-- Input validation with Marshmallow
+- Flask-Caching
+- Marshmallow validation
 - SQLAlchemy ORM relationships
+- Environment variables for sensitive credentials
+- HTTPS deployment
 
 ---
 
@@ -276,7 +338,7 @@ This API includes several features to improve security and performance:
 Clone the repository:
 
 ```bash
-git clone [https://github.com/sepudjowargono/Mechanic_Shop.git]
+git clone https://github.com/sepudjowargono/Mechanic_Shop.git
 ```
 
 Install dependencies:
@@ -285,10 +347,10 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Run the Flask application:
+Run the application:
 
 ```bash
-flask run
+flask --app flask_app run
 ```
 
 ---
